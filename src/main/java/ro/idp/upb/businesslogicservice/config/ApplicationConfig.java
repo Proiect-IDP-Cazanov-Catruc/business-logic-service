@@ -1,3 +1,4 @@
+/* Ionel Catruc 343C3, Veaceslav Cazanov 343C3 | IDP BUSINESS-LOGIC-SERVICE | (C) 2024 */
 package ro.idp.upb.businesslogicservice.config;
 
 import lombok.RequiredArgsConstructor;
@@ -16,31 +17,31 @@ import ro.idp.upb.businesslogicservice.service.UserService;
 @Configuration
 @RequiredArgsConstructor
 public class ApplicationConfig {
-    private final UserService userService;
+	private final UserService userService;
 
-    @Bean
-    public UserDetailsService userDetailsService() {
-        return username ->
-                userService
-                        .findByEmail(username)
-                        .orElseThrow(() -> new UsernameNotFoundException("User not found"));
-    }
+	@Bean
+	public UserDetailsService userDetailsService() {
+		return username ->
+				userService
+						.findByEmail(username)
+						.orElseThrow(() -> new UsernameNotFoundException("User not found"));
+	}
 
-    @Bean
-    public AuthenticationProvider authenticationProvider() {
-        DaoAuthenticationProvider authProvider = new DaoAuthenticationProvider();
-        authProvider.setUserDetailsService(userDetailsService());
-        return authProvider;
-    }
+	@Bean
+	public AuthenticationProvider authenticationProvider() {
+		DaoAuthenticationProvider authProvider = new DaoAuthenticationProvider();
+		authProvider.setUserDetailsService(userDetailsService());
+		return authProvider;
+	}
 
-    @Bean
-    public AuthenticationManager authenticationManager(AuthenticationConfiguration config)
-            throws Exception {
-        return config.getAuthenticationManager();
-    }
+	@Bean
+	public AuthenticationManager authenticationManager(AuthenticationConfiguration config)
+			throws Exception {
+		return config.getAuthenticationManager();
+	}
 
-    @Bean
-    public PasswordEncoder passwordEncoder() {
-        return new BCryptPasswordEncoder();
-    }
+	@Bean
+	public PasswordEncoder passwordEncoder() {
+		return new BCryptPasswordEncoder();
+	}
 }
