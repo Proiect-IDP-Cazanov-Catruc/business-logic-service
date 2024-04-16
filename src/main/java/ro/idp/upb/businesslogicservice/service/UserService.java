@@ -11,6 +11,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.HttpServerErrorException;
+import org.springframework.web.client.HttpStatusCodeException;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
 import ro.idp.upb.businesslogicservice.data.dto.request.PostManagerDto;
@@ -45,16 +46,18 @@ public class UserService {
 
 		String urlTemplate = UriComponentsBuilder.fromHttpUrl(url).encode().toUriString();
 
-		ResponseEntity<UserDto> response =
-				restTemplate.exchange(urlTemplate, HttpMethod.GET, entity, UserDto.class);
-		if (!response.getStatusCode().is2xxSuccessful()) {
+		ResponseEntity<UserDto> response;
+
+		try {
+			response = restTemplate.exchange(urlTemplate, HttpMethod.GET, entity, UserDto.class);
+		} catch (HttpStatusCodeException e) {
 			log.error("Unable to find user details by user email {}!", email);
 			return Optional.empty();
-		} else {
-			log.info("Successfully fetched user details by user email {}!", email);
-			UserDto dtoResponse = response.getBody();
-			return Optional.of(userDtoToEntity(dtoResponse));
 		}
+
+		log.info("Successfully fetched user details by user email {}!", email);
+		UserDto dtoResponse = response.getBody();
+		return Optional.of(userDtoToEntity(dtoResponse));
 	}
 
 	public User userDtoToEntity(UserDto userDto) {

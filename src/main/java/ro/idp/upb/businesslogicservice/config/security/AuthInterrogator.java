@@ -7,6 +7,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.*;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Component;
+import org.springframework.web.client.HttpStatusCodeException;
 import org.springframework.web.client.RestTemplate;
 import ro.idp.upb.businesslogicservice.data.dto.response.UserDto;
 import ro.idp.upb.businesslogicservice.utils.StaticConstants;
@@ -32,10 +33,12 @@ public class AuthInterrogator {
 				UrlBuilder.replacePlaceholdersInString("${auth-service-url}${users-me-endpoint}", params);
 
 		final HttpEntity<Void> entity = new HttpEntity<>(headers);
-		final ResponseEntity<UserDto> response =
-				restTemplate.exchange(authUsersMeEndpointUrl, HttpMethod.GET, entity, UserDto.class);
+		final ResponseEntity<UserDto> response;
 
-		if (!response.getStatusCode().is2xxSuccessful()) {
+		try {
+			response =
+					restTemplate.exchange(authUsersMeEndpointUrl, HttpMethod.GET, entity, UserDto.class);
+		} catch (HttpStatusCodeException e) {
 			throw new AccessDeniedException("Invalid token");
 		}
 
