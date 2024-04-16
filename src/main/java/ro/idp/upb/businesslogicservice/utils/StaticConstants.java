@@ -17,6 +17,8 @@ public class StaticConstants {
 
 	public final String ioProductsEndpoint;
 
+	public final String ioCategoriesEndpoint;
+
 	public StaticConstants(
 			@Value("${idp.io-service.url}") String ioServiceUrl,
 			@Value("${idp.auth-service.url}") String authServiceUrl,
@@ -24,7 +26,8 @@ public class StaticConstants {
 			@Value("${idp.io-service.users-endpoint}") String ioUsersEndpoint,
 			@Value("${idp.io-service.find-by-email-endpoint}") String ioFindByEmailEndpoint,
 			@Value("${idp.io-service.post-manager-endpoint}") String ioPostManagerEndpoint,
-			@Value("${idp.io-service.products-endpoint}") String ioProductsEndpoint) {
+			@Value("${idp.io-service.products-endpoint}") String ioProductsEndpoint,
+			@Value("${idp.io-service.categories-endpoint}") String ioCategoriesEndpoint) {
 		this.ioServiceUrl = ioServiceUrl;
 		this.authServiceUrl = authServiceUrl;
 		this.authUsersMeEndpoint = authUsersMeEndpoint;
@@ -32,5 +35,6 @@ public class StaticConstants {
 		this.ioFindByEmailEndpoint = ioFindByEmailEndpoint;
 		this.ioPostManagerEndpoint = ioPostManagerEndpoint;
 		this.ioProductsEndpoint = ioProductsEndpoint;
+		this.ioCategoriesEndpoint = ioCategoriesEndpoint;
 	}
 }
