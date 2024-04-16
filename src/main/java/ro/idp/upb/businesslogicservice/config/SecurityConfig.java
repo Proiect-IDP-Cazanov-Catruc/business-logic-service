@@ -21,11 +21,13 @@ import ro.idp.upb.businesslogicservice.config.security.JwtAuthenticationFilter;
 public class SecurityConfig {
 	private final JwtAuthenticationFilter jwtAuthFilter;
 	private final AuthenticationProvider authenticationProvider;
+	private static final String[] WHITE_LIST_URL = {"/error"};
 
 	@Bean
 	public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
 		http.csrf(AbstractHttpConfigurer::disable)
-				.authorizeHttpRequests(req -> req.anyRequest().authenticated())
+				.authorizeHttpRequests(
+						req -> req.requestMatchers(WHITE_LIST_URL).permitAll().anyRequest().authenticated())
 				.sessionManagement(
 						session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
 				.authenticationProvider(authenticationProvider)

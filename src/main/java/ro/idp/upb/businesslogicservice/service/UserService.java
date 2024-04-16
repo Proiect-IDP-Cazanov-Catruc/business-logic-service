@@ -7,9 +7,13 @@ import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.*;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.HttpClientErrorException;
+import org.springframework.web.client.HttpServerErrorException;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
+import ro.idp.upb.businesslogicservice.data.dto.request.PostManagerDto;
 import ro.idp.upb.businesslogicservice.data.dto.response.UserDto;
 import ro.idp.upb.businesslogicservice.data.entity.User;
 import ro.idp.upb.businesslogicservice.utils.StaticConstants;
@@ -61,5 +65,44 @@ public class UserService {
 				.email(userDto.getEmail())
 				.role(userDto.getRole())
 				.build();
+	}
+
+	@PreAuthorize("hasRole('ADMIN')")
+	public ResponseEntity<?> createManager(PostManagerDto dto) {
+		RestTemplate restTemplate = new RestTemplate();
+		HttpHeaders headers = new HttpHeaders();
+		headers.set(HttpHeaders.ACCEPT, MediaType.APPLICATION_JSON_VALUE);
+		HttpEntity<?> entity = new HttpEntity<>(dto, headers);
+
+		Map<String, Object> params = new HashMap<>();
+		params.put("io-service-url", staticConstants.ioServiceUrl);
+		params.put("users-endpoint", staticConstants.ioUsersEndpoint);
+		params.put("post-manager-endpoint", staticConstants.ioPostManagerEndpoint);
+
+		String url =
+				UrlBuilder.replacePlaceholdersInString(
+						"${io-service-url}${users-endpoint}${post-manager-endpoint}", params);
+
+		ResponseEntity<?> response;
+		try {
+			response = restTemplate.postForEntity(url, entity, UserDto.class);
+		} catch (HttpClientErrorException e) {
+			response = new ResponseEntity<>(e.getResponseBodyAsString(), HttpStatus.BAD_REQUEST);
+		} catch (HttpServerErrorException e) {
+			response =
+					new ResponseEntity<>(e.getResponseBodyAsString(), HttpStatus.INTERNAL_SERVER_ERROR);
+		} catch (Exception e) {
+			response = new ResponseEntity<>(e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
+		}
+
+		if (!response.getStatusCode().is2xxSuccessful()) {
+			log.error("[CREATE MANAGER] Unable to create manager with email {}!", dto.getEmail());
+		} else {
+			if (response.getBody() instanceof UserDto responseBody) {
+				log.info(
+						"Successfully created manager {} with id {}!", dto.getEmail(), responseBody.getId());
+			}
+		}
+		return response;
 	}
 }
