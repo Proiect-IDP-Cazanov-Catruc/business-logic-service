@@ -24,6 +24,13 @@ public class ManagerService {
 
 	@PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
 	public ResponseEntity<?> addProduct(AddProductPost dto) {
+		log.info(
+				"Adding product [Name: {}], [Description: {}], [Price: {}], [Quantity: {}], [CategoryId: {}]...",
+				dto.getName(),
+				dto.getDescription().substring(0, 15),
+				dto.getPrice(),
+				dto.getQuantity(),
+				dto.getCategoryId());
 		RestTemplate restTemplate = new RestTemplate();
 		HttpHeaders headers = new HttpHeaders();
 		headers.set(HttpHeaders.ACCEPT, MediaType.APPLICATION_JSON_VALUE);
@@ -41,12 +48,24 @@ public class ManagerService {
 		try {
 			response = restTemplate.postForEntity(url, entity, ProductGetDto.class);
 		} catch (HttpStatusCodeException e) {
-			log.error("Unable to add product {}!", dto.getName());
+			log.error(
+					"Unable to add product [Name: {}], [Description: {}], [Price: {}], [Quantity: {}], [CategoryId: {}]!",
+					dto.getName(),
+					dto.getDescription().substring(0, 15),
+					dto.getPrice(),
+					dto.getQuantity(),
+					dto.getCategoryId());
 			return new ResponseEntity<>(
 					e.getResponseBodyAsString(), e.getResponseHeaders(), e.getStatusCode());
 		}
 
-		log.info("Successfully added product {}!", dto.getName());
+		log.info(
+				"Successfully added product [Name: {}], [Description: {}], [Price: {}], [Quantity: {}], [CategoryId: {}]!",
+				dto.getName(),
+				dto.getDescription().substring(0, 15),
+				dto.getPrice(),
+				dto.getQuantity(),
+				dto.getCategoryId());
 		return response;
 	}
 }

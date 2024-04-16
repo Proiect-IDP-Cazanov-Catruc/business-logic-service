@@ -23,6 +23,7 @@ public class StoreService {
 	private final StaticConstants staticConstants;
 
 	public ResponseEntity<?> getAllCategories() {
+		log.info("Fetching all store categories...");
 		RestTemplate restTemplate = new RestTemplate();
 		HttpHeaders headers = new HttpHeaders();
 		headers.set(HttpHeaders.ACCEPT, MediaType.APPLICATION_JSON_VALUE);
@@ -45,11 +46,14 @@ public class StoreService {
 					e.getResponseBodyAsString(), e.getResponseHeaders(), e.getStatusCode());
 		}
 
-		log.info("Successfully fetched all categories");
+		log.info(
+				"Successfully fetched all categories. Total: {}!",
+				response.getBody() == null ? 0 : response.getBody().length);
 		return response;
 	}
 
 	public ResponseEntity<?> getProducts(UUID categoryId) {
+		log.info("Fetching store products, with optional categoryId {}...", categoryId);
 		RestTemplate restTemplate = new RestTemplate();
 		HttpHeaders headers = new HttpHeaders();
 		headers.set(HttpHeaders.ACCEPT, MediaType.APPLICATION_JSON_VALUE);
@@ -78,7 +82,10 @@ public class StoreService {
 					e.getResponseBodyAsString(), e.getResponseHeaders(), e.getStatusCode());
 		}
 
-		log.info("Successfully fetched all products, with categoryId {}", categoryId);
+		log.info(
+				"Successfully fetched all products, with categoryId {}. Total: {}!",
+				categoryId,
+				response.getBody() == null ? 0 : response.getBody().length);
 		return response;
 	}
 }

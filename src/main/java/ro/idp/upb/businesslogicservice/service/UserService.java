@@ -72,6 +72,12 @@ public class UserService {
 
 	@PreAuthorize("hasRole('ADMIN')")
 	public ResponseEntity<?> createManager(PostManagerDto dto) {
+		log.info(
+				"Creating manager [Firstname: {}], [Lastname: {}], [Email: {}]...",
+				dto.getFirstName(),
+				dto.getLastName(),
+				dto.getEmail());
+
 		RestTemplate restTemplate = new RestTemplate();
 		HttpHeaders headers = new HttpHeaders();
 		headers.set(HttpHeaders.ACCEPT, MediaType.APPLICATION_JSON_VALUE);
@@ -104,11 +110,19 @@ public class UserService {
 		}
 
 		if (!response.getStatusCode().is2xxSuccessful()) {
-			log.error("[CREATE MANAGER] Unable to create manager with email {}!", dto.getEmail());
+			log.error(
+					"Unable to create manager [Firstname: {}], [Lastname: {}], [Email: {}]!",
+					dto.getFirstName(),
+					dto.getLastName(),
+					dto.getEmail());
 		} else {
 			if (response.getBody() instanceof UserDto responseBody) {
 				log.info(
-						"Successfully created manager {} with id {}!", dto.getEmail(), responseBody.getId());
+						"Created manager [Firstname: {}], [Lastname: {}], [Email: {}], associated id: {}!",
+						dto.getFirstName(),
+						dto.getLastName(),
+						dto.getEmail(),
+						responseBody.getId());
 			}
 		}
 		return response;

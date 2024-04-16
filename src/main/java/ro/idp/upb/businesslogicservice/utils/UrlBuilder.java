@@ -2,8 +2,10 @@
 package ro.idp.upb.businesslogicservice.utils;
 
 import java.util.Map;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.text.StringSubstitutor;
 
+@Slf4j
 public final class UrlBuilder {
 
 	private UrlBuilder() {
@@ -20,6 +22,15 @@ public final class UrlBuilder {
 			Map<String, Object> arguments,
 			String placeholderStart,
 			String placeholderEnd) {
-		return StringSubstitutor.replace(stringTemplate, arguments, placeholderStart, placeholderEnd);
+		String res =
+				StringSubstitutor.replace(stringTemplate, arguments, placeholderStart, placeholderEnd);
+		log.info(
+				"[CUSTOM URL BUILDER] From {} to {}, args [{}], placeholder: [{}<...>{}]!",
+				stringTemplate,
+				res,
+				arguments,
+				placeholderStart,
+				placeholderEnd);
+		return res;
 	}
 }
