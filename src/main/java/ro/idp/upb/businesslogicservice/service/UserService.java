@@ -90,10 +90,15 @@ public class UserService {
 		try {
 			response = restTemplate.postForEntity(url, entity, UserDto.class);
 		} catch (HttpClientErrorException e) {
-			response = new ResponseEntity<>(e.getResponseBodyAsString(), HttpStatus.BAD_REQUEST);
+			response =
+					new ResponseEntity<>(
+							e.getResponseBodyAsString(), e.getResponseHeaders(), HttpStatus.BAD_REQUEST);
 		} catch (HttpServerErrorException e) {
 			response =
-					new ResponseEntity<>(e.getResponseBodyAsString(), HttpStatus.INTERNAL_SERVER_ERROR);
+					new ResponseEntity<>(
+							e.getResponseBodyAsString(),
+							e.getResponseHeaders(),
+							HttpStatus.INTERNAL_SERVER_ERROR);
 		} catch (Exception e) {
 			response = new ResponseEntity<>(e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
 		}
