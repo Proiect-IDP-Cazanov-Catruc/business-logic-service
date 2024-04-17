@@ -6,13 +6,19 @@ import java.util.Map;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.tomcat.websocket.AuthenticationException;
 import org.springframework.http.*;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.HttpStatusCodeException;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
+import ro.idp.upb.businesslogicservice.config.SecurityUtils;
+import ro.idp.upb.businesslogicservice.data.dto.request.OrderPostDto;
 import ro.idp.upb.businesslogicservice.data.dto.response.CategoryGetDto;
+import ro.idp.upb.businesslogicservice.data.dto.response.GetOrderDto;
 import ro.idp.upb.businesslogicservice.data.dto.response.ProductGetDto;
+import ro.idp.upb.businesslogicservice.data.entity.User;
+import ro.idp.upb.businesslogicservice.data.enums.Role;
 import ro.idp.upb.businesslogicservice.utils.StaticConstants;
 import ro.idp.upb.businesslogicservice.utils.UrlBuilder;
 
@@ -87,5 +93,101 @@ public class StoreService {
 				categoryId,
 				response.getBody() == null ? 0 : response.getBody().length);
 		return response;
+	}
+
+	public ResponseEntity<?> placeOrder(OrderPostDto dto) throws AuthenticationException {
+		User currentUser = SecurityUtils.getCurrentUser();
+		if (currentUser != null) {
+			log.info(
+					"Placing order for user {} and {} products!",
+					currentUser.getId(),
+					dto.getProductsIds().size());
+			RestTemplate restTemplate = new RestTemplate();
+			HttpHeaders headers = new HttpHeaders();
+			headers.set(HttpHeaders.ACCEPT, MediaType.APPLICATION_JSON_VALUE);
+
+			Map<String, Object> params = new HashMap<>();
+			params.put("io-service-url", staticConstants.ioServiceUrl);
+			params.put("orders-endpoint", staticConstants.ioOrdersEndpoint);
+
+			String url =
+					UrlBuilder.replacePlaceholdersInString("${io-service-url}${orders-endpoint}", params);
+
+			dto.setUserId(currentUser.getId());
+			ResponseEntity<GetOrderDto> response;
+			try {
+				HttpEntity<?> entity = new HttpEntity<>(dto, headers);
+				response = restTemplate.postForEntity(url, entity, GetOrderDto.class);
+			} catch (HttpStatusCodeException e) {
+				log.error("Unable to place order for user {}", currentUser.getId());
+				return new ResponseEntity<>(
+						e.getResponseBodyAsString(), e.getResponseHeaders(), e.getStatusCode());
+			}
+
+			log.info(
+					"Successfully placed order for user {}. Order id: {}!",
+					currentUser.getId(),
+					response.getBody() == null ? null : response.getBody().getOrderId());
+			return response;
+		}
+		log.error("Could not get current user to place order!");
+		return ResponseEntity.internalServerError().build();
+	}
+
+	public ResponseEntity<?> getOrders(UUID byUserId, Boolean ownOrders)
+			throws AuthenticationException {
+		User currentUser = SecurityUtils.getCurrentUser();
+		if (currentUser != null) {
+			log.info(
+					"Getting orders, byUserId {}, current user id {}, current user role {}...",
+					byUserId,
+					currentUser.getId(),
+					currentUser.getRole());
+			RestTemplate restTemplate = new RestTemplate();
+			HttpHeaders headers = new HttpHeaders();
+			headers.set(HttpHeaders.ACCEPT, MediaType.APPLICATION_JSON_VALUE);
+
+			Map<String, Object> params = new HashMap<>();
+			params.put("io-service-url", staticConstants.ioServiceUrl);
+			params.put("orders-endpoint", staticConstants.ioOrdersEndpoint);
+
+			String url =
+					UrlBuilder.replacePlaceholdersInString("${io-service-url}${orders-endpoint}", params);
+
+			if (currentUser.getRole().equals(Role.USER) || ownOrders) {
+				byUserId = currentUser.getId();
+			}
+
+			String urlEncoded =
+					UriComponentsBuilder.fromHttpUrl(url)
+							.queryParam("byUserId", byUserId)
+							.encode()
+							.toUriString();
+
+			ResponseEntity<GetOrderDto[]> response;
+
+			try {
+				HttpEntity<?> entity = new HttpEntity<>(headers);
+				response = restTemplate.exchange(urlEncoded, HttpMethod.GET, entity, GetOrderDto[].class);
+			} catch (HttpStatusCodeException e) {
+				log.error(
+						"Unable to get orders, byUserId {}, current user id {}, current user role {}...",
+						byUserId,
+						currentUser.getId(),
+						currentUser.getRole());
+				return new ResponseEntity<>(
+						e.getResponseBodyAsString(), e.getResponseHeaders(), e.getStatusCode());
+			}
+
+			log.info(
+					"Successfully got orders, byUserId {}, current user id {}, current user role {}! Total: {}!",
+					byUserId,
+					currentUser.getId(),
+					currentUser.getRole(),
+					response.getBody() == null ? null : response.getBody().length);
+			return response;
+		}
+		log.error("Could not get current user to get orders!");
+		return ResponseEntity.internalServerError().build();
 	}
 }
