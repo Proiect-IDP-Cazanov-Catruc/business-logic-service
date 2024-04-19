@@ -24,4 +24,4 @@ jobs:
         with:
           context: .
           push: true
-          tags: ${{ secrets.DOCKERHUB_USERNAME }}/idp-proiect:${{ github.sha }} , ${{ secrets.DOCKERHUB_USERNAME }}/idp-proiect:latest
+          tags: ${{ secrets.DOCKERHUB_USERNAME }}/idp-proiect/business-logic:${{ github.sha }} , ${{ secrets.DOCKERHUB_USERNAME }}/idp-proiect/business-logic:latest
