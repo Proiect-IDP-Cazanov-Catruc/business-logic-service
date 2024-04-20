@@ -1,6 +1,7 @@
 /* Ionel Catruc 343C3, Veaceslav Cazanov 343C3 | IDP BUSINESS-LOGIC-SERVICE | (C) 2024 */
 package ro.idp.upb.businesslogicservice.service;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
@@ -9,14 +10,12 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.*;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
-import org.springframework.web.client.HttpClientErrorException;
-import org.springframework.web.client.HttpServerErrorException;
-import org.springframework.web.client.HttpStatusCodeException;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
 import ro.idp.upb.businesslogicservice.data.dto.request.PostManagerDto;
 import ro.idp.upb.businesslogicservice.data.dto.response.UserDto;
 import ro.idp.upb.businesslogicservice.data.entity.User;
+import ro.idp.upb.businesslogicservice.exception.handle.RestTemplateResponseErrorHandler;
 import ro.idp.upb.businesslogicservice.utils.StaticConstants;
 import ro.idp.upb.businesslogicservice.utils.UrlBuilder;
 
@@ -25,9 +24,13 @@ import ro.idp.upb.businesslogicservice.utils.UrlBuilder;
 @Slf4j
 public class UserService {
 	private final StaticConstants staticConstants;
+	private final ObjectMapper objectMapper;
 
 	public Optional<User> findByEmail(String email) {
 		RestTemplate restTemplate = new RestTemplate();
+		restTemplate.setErrorHandler(
+				new RestTemplateResponseErrorHandler(
+						objectMapper, () -> log.error("Unable to find user details by user email {}!", email)));
 		HttpHeaders headers = new HttpHeaders();
 		headers.set(HttpHeaders.ACCEPT, MediaType.APPLICATION_JSON_VALUE);
 		HttpEntity<?> entity = new HttpEntity<>(headers);
@@ -48,12 +51,7 @@ public class UserService {
 
 		ResponseEntity<UserDto> response;
 
-		try {
-			response = restTemplate.exchange(urlTemplate, HttpMethod.GET, entity, UserDto.class);
-		} catch (HttpStatusCodeException e) {
-			log.error("Unable to find user details by user email {}!", email);
-			return Optional.empty();
-		}
+		response = restTemplate.exchange(urlTemplate, HttpMethod.GET, entity, UserDto.class);
 
 		log.info("Successfully fetched user details by user email {}!", email);
 		UserDto dtoResponse = response.getBody();
@@ -71,7 +69,7 @@ public class UserService {
 	}
 
 	@PreAuthorize("hasRole('ADMIN')")
-	public ResponseEntity<?> createManager(PostManagerDto dto) {
+	public UserDto createManager(PostManagerDto dto) {
 		log.info(
 				"Creating manager [Firstname: {}], [Lastname: {}], [Email: {}]...",
 				dto.getFirstName(),
@@ -79,6 +77,15 @@ public class UserService {
 				dto.getEmail());
 
 		RestTemplate restTemplate = new RestTemplate();
+		restTemplate.setErrorHandler(
+				new RestTemplateResponseErrorHandler(
+						objectMapper,
+						() ->
+								log.error(
+										"Unable to create manager [Firstname: {}], [Lastname: {}], [Email: {}]!",
+										dto.getFirstName(),
+										dto.getLastName(),
+										dto.getEmail())));
 		HttpHeaders headers = new HttpHeaders();
 		headers.set(HttpHeaders.ACCEPT, MediaType.APPLICATION_JSON_VALUE);
 		HttpEntity<?> entity = new HttpEntity<>(dto, headers);
@@ -92,39 +99,16 @@ public class UserService {
 				UrlBuilder.replacePlaceholdersInString(
 						"${io-service-url}${users-endpoint}${post-manager-endpoint}", params);
 
-		ResponseEntity<?> response;
-		try {
-			response = restTemplate.postForEntity(url, entity, UserDto.class);
-		} catch (HttpClientErrorException e) {
-			response =
-					new ResponseEntity<>(
-							e.getResponseBodyAsString(), e.getResponseHeaders(), HttpStatus.BAD_REQUEST);
-		} catch (HttpServerErrorException e) {
-			response =
-					new ResponseEntity<>(
-							e.getResponseBodyAsString(),
-							e.getResponseHeaders(),
-							HttpStatus.INTERNAL_SERVER_ERROR);
-		} catch (Exception e) {
-			response = new ResponseEntity<>(e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
-		}
+		ResponseEntity<UserDto> response = restTemplate.postForEntity(url, entity, UserDto.class);
 
-		if (!response.getStatusCode().is2xxSuccessful()) {
-			log.error(
-					"Unable to create manager [Firstname: {}], [Lastname: {}], [Email: {}]!",
-					dto.getFirstName(),
-					dto.getLastName(),
-					dto.getEmail());
-		} else {
-			if (response.getBody() instanceof UserDto responseBody) {
-				log.info(
-						"Created manager [Firstname: {}], [Lastname: {}], [Email: {}], associated id: {}!",
-						dto.getFirstName(),
-						dto.getLastName(),
-						dto.getEmail(),
-						responseBody.getId());
-			}
-		}
-		return response;
+		UserDto responseDto = response.getBody();
+
+		log.info(
+				"Created manager [Firstname: {}], [Lastname: {}], [Email: {}], associated id: {}!",
+				dto.getFirstName(),
+				dto.getLastName(),
+				dto.getEmail(),
+				responseDto.getId());
+		return responseDto;
 	}
 }

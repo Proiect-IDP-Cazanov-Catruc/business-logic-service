@@ -3,16 +3,19 @@ package ro.idp.upb.businesslogicservice.config;
 
 import java.util.Optional;
 import java.util.stream.Stream;
-import org.apache.tomcat.websocket.AuthenticationException;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import ro.idp.upb.businesslogicservice.data.entity.User;
+import ro.idp.upb.businesslogicservice.exception.SecurityContextCurrentUserException;
+import ro.idp.upb.businesslogicservice.exception.SecurityContextUsernameException;
 
+@Slf4j
 public final class SecurityUtils {
 
-	public static Optional<String> getCurrentUserLogin() {
+	public static String getCurrentUserLogin() {
 		var securityContext = SecurityContextHolder.getContext();
 		return Optional.ofNullable(securityContext.getAuthentication())
 				.map(
@@ -24,23 +27,29 @@ public final class SecurityUtils {
 								return authenticationPrincipal;
 							}
 							return null;
+						})
+				.orElseThrow(
+						() -> {
+							log.error("Unable to get current username!");
+							return new SecurityContextUsernameException();
 						});
 	}
 
-	public static User getCurrentUser() throws AuthenticationException {
+	public static User getCurrentUser() {
 		var securityContext = SecurityContextHolder.getContext();
-		User user =
-				Optional.ofNullable(securityContext.getAuthentication())
-						.map(
-								authentication -> {
-									if (authentication.getPrincipal() instanceof final User principalUser) {
-										return principalUser;
-									}
-									return null;
-								})
-						.orElseThrow(
-								() -> new AuthenticationException("Could not get current authenticated user!"));
-		return user;
+		return Optional.ofNullable(securityContext.getAuthentication())
+				.map(
+						authentication -> {
+							if (authentication.getPrincipal() instanceof final User principalUser) {
+								return principalUser;
+							}
+							return null;
+						})
+				.orElseThrow(
+						() -> {
+							log.error("Unable to get current user from Security Context!");
+							return new SecurityContextCurrentUserException();
+						});
 	}
 
 	public static boolean isAuthenticated() {
