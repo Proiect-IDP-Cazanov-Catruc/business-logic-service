@@ -14,6 +14,7 @@ import ro.idp.upb.businesslogicservice.data.dto.request.AddProductPost;
 import ro.idp.upb.businesslogicservice.data.dto.response.ProductGetDto;
 import ro.idp.upb.businesslogicservice.exception.handle.RestTemplateResponseErrorHandler;
 import ro.idp.upb.businesslogicservice.utils.StaticConstants;
+import ro.idp.upb.businesslogicservice.utils.StringUtils;
 import ro.idp.upb.businesslogicservice.utils.UrlBuilder;
 
 @Service
@@ -29,7 +30,7 @@ public class ManagerService {
 		log.info(
 				"Adding product [Name: {}], [Description: {}], [Price: {}], [Quantity: {}], [CategoryId: {}]...",
 				dto.getName(),
-				dto.getDescription().substring(0, 15),
+				StringUtils.truncateString(dto.getDescription()),
 				dto.getPrice(),
 				dto.getQuantity(),
 				dto.getCategoryId());
@@ -42,7 +43,7 @@ public class ManagerService {
 								log.error(
 										"Unable to add product [Name: {}], [Description: {}], [Price: {}], [Quantity: {}], [CategoryId: {}]!",
 										dto.getName(),
-										dto.getDescription().substring(0, 15),
+										StringUtils.truncateString(dto.getDescription()),
 										dto.getPrice(),
 										dto.getQuantity(),
 										dto.getCategoryId())));
@@ -64,7 +65,7 @@ public class ManagerService {
 		log.info(
 				"Successfully added product [Name: {}], [Description: {}], [Price: {}], [Quantity: {}], [CategoryId: {}]!",
 				dto.getName(),
-				dto.getDescription().substring(0, 15),
+				StringUtils.truncateString(dto.getDescription()),
 				dto.getPrice(),
 				dto.getQuantity(),
 				dto.getCategoryId());
