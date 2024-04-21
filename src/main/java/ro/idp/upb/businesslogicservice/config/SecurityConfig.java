@@ -12,6 +12,8 @@ import org.springframework.security.config.annotation.web.configurers.AbstractHt
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.security.web.context.request.async.WebAsyncManagerIntegrationFilter;
+import ro.idp.upb.businesslogicservice.config.security.ExceptionHandlerFilter;
 import ro.idp.upb.businesslogicservice.config.security.JwtAuthenticationFilter;
 
 @Configuration
@@ -23,6 +25,8 @@ public class SecurityConfig {
 	private final AuthenticationProvider authenticationProvider;
 	private static final String[] WHITE_LIST_URL = {"/error"};
 
+	private final ExceptionHandlerFilter exceptionHandlerFilter;
+
 	@Bean
 	public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
 		http.csrf(AbstractHttpConfigurer::disable)
@@ -31,7 +35,8 @@ public class SecurityConfig {
 				.sessionManagement(
 						session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
 				.authenticationProvider(authenticationProvider)
-				.addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
+				.addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class)
+				.addFilterAt(exceptionHandlerFilter, WebAsyncManagerIntegrationFilter.class);
 		return http.build();
 	}
 }
