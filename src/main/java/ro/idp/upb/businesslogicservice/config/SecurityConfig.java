@@ -23,7 +23,16 @@ import ro.idp.upb.businesslogicservice.config.security.JwtAuthenticationFilter;
 public class SecurityConfig {
 	private final JwtAuthenticationFilter jwtAuthFilter;
 	private final AuthenticationProvider authenticationProvider;
-	private static final String[] WHITE_LIST_URL = {"/error"};
+	private static final String[] WHITE_LIST_URL = {
+		"/error",
+		"/prometheus/**",
+		"/metrics/**",
+		"/info/**",
+		"/health/**",
+		"/shutdown/**",
+		"/beans/**",
+		"/actuator/**"
+	};
 
 	private final ExceptionHandlerFilter exceptionHandlerFilter;
 
